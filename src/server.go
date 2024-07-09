@@ -32,20 +32,28 @@ func (s *Server) HandleConnection(conn net.Conn) {
 		make(chan string),
 		conn,
 	)
-	go user.ListenMessage(s)
 	s.RWMux.Lock()
 	s.UserMap[user.name] = user
 	s.RWMux.Unlock()
-	user.SendOnlineMessage()
+	//广播上线消息
+	s.BoradCast(user, "user online")
+
 }
 
-// BoradCast user online message to every user
-func (s *Server) BoradCast() {
+// BoradCast user online message to every user 触发用户上线消息
+func (s *Server) BoradCast(user *User, msg string) {
+	s.Message <- "name[" + user.name + "] addr[" + user.addr + "] : " + msg
+}
+
+// 所有listen方法listen的都是channel，广播的定义是由服务端广播到客户端
+func (s *Server) ListenMessage() string {
 	for {
 		msg := <-s.Message
-		for name, user := range s.UserMap {
-			user.con.Write([]byte("name[" + name + "] addr[" + user.addr + "] :" + msg))
+		s.RWMux.RLock()
+		for _, user := range s.UserMap {
+			user.uc <- msg
 		}
+		s.RWMux.RUnlock()
 	}
 }
 
@@ -56,7 +64,7 @@ func (s *Server) Start() error {
 	}
 	defer listen.Close()
 	//bordcast online message
-	go s.BoradCast()
+	go s.ListenMessage()
 	for {
 		conn, err := listen.Accept()
 		if err != nil {
