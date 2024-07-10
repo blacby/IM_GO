@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"strconv"
 	"sync"
@@ -37,6 +38,22 @@ func (s *Server) HandleConnection(conn net.Conn) {
 	s.RWMux.Unlock()
 	//广播上线消息
 	s.BoradCast(user, "user online")
+	go func() {
+		for {
+			buf := make([]byte, 4096)
+			n, err := user.con.Read(buf)
+			if n == 0 {
+				s.BoradCast(user, "user offline")
+				return
+			}
+			if err != nil && err != io.EOF {
+				fmt.Println("read client message err:" + err.Error())
+				return
+			}
+			s.BoradCast(user, string(buf[:n-1]))
+		}
+
+	}()
 
 }
 
