@@ -16,7 +16,7 @@ type Server struct {
 	RWMux   sync.RWMutex
 }
 
-func NewSever(ip string, port int, userMap map[string]*User, message chan string) *Server {
+func NewSever(ip string, port int, message chan string, userMap map[string]*User) *Server {
 	server := &Server{
 		IP:      ip,
 		Port:    port,

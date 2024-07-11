@@ -1,6 +1,9 @@
 package main
 
-import "net"
+import (
+	"net"
+	"strings"
+)
 
 type User struct {
 	name   string
@@ -49,11 +52,29 @@ func (user *User) DoMessage(msg string) {
 		//查询在线用户
 		user.server.RWMux.Lock()
 		for _, userEnty := range user.server.UserMap {
-			whoOnlineMsg := "[" + userEnty.addr + "]" + userEnty.name + ":在线..\n"
+			whoOnlineMsg := "[" + userEnty.addr + "]" + userEnty.name + ":online..\n"
 			user.SendMsg(whoOnlineMsg)
 		}
 		user.server.RWMux.Unlock()
 
+	} else if len(msg) > 7 && msg[:7] == "rename|" {
+		//user.server.RWMux.Lock()
+		//user.server.UserMap[msg[7:]] = user
+		//delete(user.server.UserMap, user.name)
+		//user.server.RWMux.Unlock()
+		//user.DoMessage("update name successfully")
+
+		newName := strings.Split(msg, "|")[1]
+		if _, ok := user.server.UserMap[newName]; ok {
+			user.SendMsg("name is already use\n")
+		} else {
+			user.server.RWMux.Lock()
+			delete(user.server.UserMap, user.name)
+			user.server.UserMap[newName] = user
+			user.server.RWMux.Unlock()
+			user.name = newName
+			user.SendMsg("update name:" + newName + " successfully\n")
+		}
 	} else {
 		user.server.BoradCast(user, msg)
 	}
