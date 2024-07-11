@@ -32,25 +32,24 @@ func (s *Server) HandleConnection(conn net.Conn) {
 	user := NewUser(
 		make(chan string),
 		conn,
+		s,
 	)
-	s.RWMux.Lock()
-	s.UserMap[user.name] = user
-	s.RWMux.Unlock()
-	//广播上线消息
-	s.BoradCast(user, "user online")
+	user.UserOnline()
+
 	go func() {
 		for {
 			buf := make([]byte, 4096)
 			n, err := user.con.Read(buf)
 			if n == 0 {
-				s.BoradCast(user, "user offline")
+				user.UserOffline()
 				return
 			}
 			if err != nil && err != io.EOF {
 				fmt.Println("read client message err:" + err.Error())
 				return
 			}
-			s.BoradCast(user, string(buf[:n-1]))
+			msg := string(buf[:n-1])
+			user.DoMessage(msg)
 		}
 
 	}()
