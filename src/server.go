@@ -70,7 +70,7 @@ func (s *Server) HandleConnection(conn net.Conn) {
 		select {
 		case <-isAlive:
 
-		case <-time.After(10 * time.Second):
+		case <-time.After(600 * time.Second):
 			user.SendMsg("your client overtime,unactivity so long")
 			//question2： user.UserOffline()
 			close(user.uc)

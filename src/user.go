@@ -75,6 +75,22 @@ func (user *User) DoMessage(msg string) {
 			user.name = newName
 			user.SendMsg("update name:" + newName + " successfully\n")
 		}
+	} else if len(msg) > 4 && strings.ToUpper(msg[:2]) == "TO" {
+		name := strings.Split(msg, "|")[1]
+		if name == "" {
+			user.SendMsg("your message dont have another user name\n")
+		}
+		content := strings.Split(msg, "|")[2]
+		if content == "" {
+			user.SendMsg("your messafe is nil\n")
+		}
+		user.server.RWMux.Lock()
+		if user1, ok := user.server.UserMap[name]; ok {
+			user1.SendMsg("user [" + user.name + "] say: " + content + "\n")
+		} else {
+			user.SendMsg("dont have this user\n")
+		}
+		user.server.RWMux.Unlock()
 	} else {
 		user.server.BoradCast(user, msg)
 	}
